@@ -1,0 +1,182 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Bobojy00/moonyara"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn compile(String) -> Engine raise
+
+pub fn eval_condition(ConditionExpr, EvalContext) -> Bool
+
+pub fn eval_expr(ConditionExpr, EvalContext) -> EvalValue
+
+pub fn match_pattern(Bytes, String, PatternKind) -> Array[StringMatch]
+
+pub fn match_rule_strings(Bytes, Array[StringDef]) -> Map[String, Array[StringMatch]]
+
+pub fn parse_rules(Array[Token]) -> Array[Rule] raise ParseError
+
+pub fn parse_rules_from_string(String) -> Array[Rule] raise
+
+pub fn tokenize(String) -> Array[Token] raise LexError
+
+// Errors
+pub(all) suberror LexError {
+  UnexpectedChar(line~ : Int, col~ : Int, char~ : Char)
+  UnterminatedString(line~ : Int, col~ : Int)
+  UnterminatedComment(line~ : Int, col~ : Int)
+  UnterminatedHexBlock(line~ : Int, col~ : Int)
+  InvalidHexDigit(line~ : Int, col~ : Int, char~ : Char)
+  InvalidHexBlock(line~ : Int, col~ : Int, msg~ : String)
+} derive(Eq, @debug.Debug)
+
+pub(all) suberror ParseError {
+  UnexpectedToken(line~ : Int, col~ : Int, expected~ : String, found~ : String)
+  UnexpectedEof(expected~ : String)
+  InvalidExpression(line~ : Int, col~ : Int, msg~ : String)
+} derive(Eq, @debug.Debug)
+
+// Types and methods
+pub(all) enum ConditionExpr {
+  TrueLit
+  FalseLit
+  IntLit(Int)
+  StringId(String)
+  MatchCount(String)
+  FileSize
+  Not(ConditionExpr)
+  And(ConditionExpr, ConditionExpr)
+  Or(ConditionExpr, ConditionExpr)
+  Eq(ConditionExpr, ConditionExpr)
+  Neq(ConditionExpr, ConditionExpr)
+  Lt(ConditionExpr, ConditionExpr)
+  Lte(ConditionExpr, ConditionExpr)
+  Gt(ConditionExpr, ConditionExpr)
+  Gte(ConditionExpr, ConditionExpr)
+  At(String, ConditionExpr)
+  In(String, ConditionExpr, ConditionExpr)
+  AnyOfThem
+  AllOfThem
+  NumOfThem(ConditionExpr)
+  NumOfSet(ConditionExpr, Array[String])
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Engine {
+  rules : Array[Rule]
+}
+pub fn Engine::add_rule(Self, Rule) -> Unit
+pub fn Engine::add_rules_from_string(Self, String) -> Unit raise
+pub fn Engine::new() -> Self
+pub fn Engine::scan(Self, Bytes) -> ScanReport
+
+pub(all) struct EvalContext {
+  target_size : Int
+  string_matches : Map[String, Array[StringMatch]]
+  all_strings : Array[StringDef]
+}
+
+pub(all) enum EvalValue {
+  VBool(Bool)
+  VInt(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct MetaEntry {
+  key : String
+  value : MetaValue
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MetaValue {
+  MetaString(String)
+  MetaInt(Int)
+  MetaBool(Bool)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PatternKind {
+  Text(String, nocase~ : Bool, wide~ : Bool)
+  Hex(Array[Byte], Array[Byte])
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Rule {
+  name : String
+  tags : Array[String]
+  metas : Array[MetaEntry]
+  strings : Array[StringDef]
+  condition : ConditionExpr
+} derive(Eq, @debug.Debug)
+
+pub(all) struct RuleMatch {
+  rule_name : String
+  tags : Array[String]
+  metas : Array[MetaEntry]
+  matched_strings : Array[StringMatch]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ScanReport {
+  target_size : Int
+  matches : Array[RuleMatch]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct StringDef {
+  identifier : String
+  pattern : PatternKind
+} derive(Eq, @debug.Debug)
+
+pub(all) struct StringMatch {
+  identifier : String
+  offset : Int
+  length : Int
+  data : Array[Byte]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Token {
+  kind : TokenKind
+  line : Int
+  col : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TokenKind {
+  KwRule
+  KwMeta
+  KwStrings
+  KwCondition
+  KwNocase
+  KwWide
+  KwAscii
+  KwAnd
+  KwOr
+  KwNot
+  KwAt
+  KwIn
+  KwOf
+  KwThem
+  KwFilesize
+  KwTrue
+  KwFalse
+  LBrace
+  RBrace
+  LParen
+  RParen
+  Colon
+  Assign
+  Eq
+  Neq
+  Lt
+  Lte
+  Gt
+  Gte
+  DotDot
+  Comma
+  StringLit(String)
+  HexBlock(Array[Byte], Array[Byte])
+  IntLit(Int)
+  StringIdent(String)
+  CountIdent(String)
+  Ident(String)
+  Eof
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits

@@ -13,3 +13,7 @@ keywords = [ "yara", "malware", "security", "scanner", "pattern-matching" ]
 preferred_target = "native"
 
 description = "Lightweight YARA-compatible malware signature scanner engine in MoonBit"
+
+import {
+  "moonbitlang/x@0.5.5",
+}

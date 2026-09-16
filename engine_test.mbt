@@ -45,8 +45,8 @@ test "engine: binary header and hex pattern with wildcards" {
 
   // Construct binary sample starting with AA BB and containing wildcards
   let sample_bytes = Bytes::from_array([
-    b'\xAA', b'\xBB', b'\x00', b'\x00', b'\x11', b'\x22', b'\x33', b'\x44',
-    b'\x55', b'\x66', b'\x00', b'\x00',
+    b'\xAA', b'\xBB', b'\x00', b'\x00', b'\x11', b'\x22', b'\x33', b'\x44', b'\x55',
+    b'\x66', b'\x00', b'\x00',
   ])
   let report = engine.scan(sample_bytes)
   assert_eq(report.matches.length(), 1)

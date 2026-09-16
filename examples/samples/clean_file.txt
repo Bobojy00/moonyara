@@ -1,0 +1,6 @@
+# System Configuration File
+version = 1.0.0
+service_name = "gateway"
+port = 8080
+log_level = "info"
+description = "Legitimate backend service configuration"

@@ -1,5 +1,7 @@
-// import {
-//   "Bobojy00/moonyara" @lib,
-// }
+import {
+  "Bobojy00/moonyara" @lib,
+  "moonbitlang/x/fs",
+  "moonbitlang/core/env",
+}
 
 pkgtype(kind: "executable")
