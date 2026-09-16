@@ -156,7 +156,7 @@ moon run cmd/main -- scan -r test_rule.yar target_sample.bin --json
 
 在你的 MoonBit 项目中直接引入 `moonyara` 作为库使用：
 
-```moonbit
+```moonbit nocheck
 // 编译规则
 let rule_src =
   #|rule Ransom_Note {

@@ -8,13 +8,7 @@ repository = "https://github.com/Bobojy00/moonyara"
 
 license = "Apache-2.0"
 
-keywords = [
-  "yara",
-  "malware",
-  "security",
-  "scanner",
-  "pattern-matching",
-]
+keywords = [ "yara", "malware", "security", "scanner", "pattern-matching" ]
 
 preferred_target = "native"
 
