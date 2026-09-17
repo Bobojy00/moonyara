@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>moonyara - 浏览器端 WebAssembly 安全特征扫描工作台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand-title">
+        <span>moonyara</span>
+        <span class="badge">WebAssembly 沙箱运行</span>
+      </div>
+      <div>
+        <span id="engineStatus" style="font-size: 0.85rem; color: #8b949e;">正在加载 MoonBit Wasm 引擎...</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Rule Editor -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">YARA 规则定义</span>
+          <div class="controls">
+            <select id="ruleTemplateSelect">
+              <option value="webshell">模板：Webshell 检出</option>
+              <option value="powershell">模板：PowerShell 混淆执行</option>
+              <option value="ransomware">模板：勒索信特征</option>
+              <option value="c2">模板：C2 流量信标</option>
+            </select>
+            <button id="validateBtn">语法校验</button>
+          </div>
+        </div>
+        <textarea id="ruleInput" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Sample Target -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">待检测目标数据</span>
+          <div class="controls">
+            <button id="loadMaliciousSample">加载攻击样本</button>
+            <button id="loadCleanSample">加载干净样本</button>
+          </div>
+        </div>
+        <textarea id="sampleInput" placeholder="在此粘贴待测文本或二进制字符串..." spellcheck="false"></textarea>
+        <div class="drop-zone" id="dropZone">
+          拖拽本地文件到此区域进行本地离线检测（数据绝不出网）
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+      <button id="scanBtn" class="primary" style="font-size: 1rem; padding: 10px 32px;">
+        立即执行 WebAssembly 沙箱扫描
+      </button>
+    </div>
+
+    <!-- Scan Results -->
+    <div class="report-panel">
+      <div class="report-header">
+        <span>扫描检测报告</span>
+        <span id="matchSummary" style="font-weight: 400; font-size: 0.85rem; color: #8b949e;">尚未扫描</span>
+      </div>
+      <div id="reportOutput" class="report-output">点击上方按钮开始扫描...</div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

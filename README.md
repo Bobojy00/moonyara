@@ -67,24 +67,32 @@
 
 | 模块 | 核心职责 |
 | :--- | :--- |
-| **`types`** | 统一领域模型：定义规则、元数据、特征字符串类型（文本/Hex）、条件表达式树与扫描报告结构。 |
-| **`lexer`** | 高效词法分析器：支持关键字、标识符、带转义字符串、十六进制通配块 `{ 4D 5A ?? 90 }` 分词。 |
-| **`parser`** | 递归下降语法解析器：运用运算符优先级爬升算法，精准解析复杂的嵌套布尔表达式与规则定义。 |
-| **`matcher`** | 字节级模式匹配引擎：基于 `(sample & mask) == target` 快速位运算处理 Hex 通配与大小写匹配。 |
-| **`eval`** | 条件求值机：计算命中计数（`#a > 2`）、绝对/区间偏移（`$a at 0`、`$a in (0..1024)`）以及量词（`any of them`）。 |
-| **`engine`** | 核心对外门面：统一串联规则编译流程与扫描管道。 |
-| **`cmd/main`** | 原生 CLI 命令行工具：提供规则语法自检、文件扫描、文本汇总以及 JSON 格式化输出。 |
+| **`types`** | 统一领域模型：定义规则、元数据、特征字符串类型（文本/Hex/正则）、条件表达式树与扫描报告结构。 |
+| **`lexer`** | 高效词法分析器：支持关键字、标识符、带转义字符串、十六进制通配块 `{ 4D 5A ?? 90 }` 与 `/regex/` 分词。 |
+| **`parser`** | 递归下降语法解析器：运用运算符优先级爬升算法，精准解析复杂的嵌套布尔表达式、多规则与包含引用。 |
+| **`regex`** | 纯 MoonBit Thompson NFA 正则引擎：支持 `\d`、`\w`、`\s`、字符集范围 `[a-z]`、量词 `* + ?`、分组分支 `(a|b)`，线性时间复杂度彻底免疫 ReDoS。 |
+| **`matcher`** | 模式匹配引擎：综合 Boyer-Moore-Horspool 文本跳跃、Hex 字节掩码位运算与 NFA 正则字节码扫描。 |
+| **`eval`** | 条件求值机：计算命中计数（`#a > 2`）、绝对/区间偏移（`$a at 0`、`$a in (0..1024)`）、二进制内省（`uint8/16/32`）与量词。 |
+| **`engine`** | 核心对外门面：统一串联规则编译流程、目录多规则合并与扫描管道。 |
+| **`cmd/main`** | 原生 CLI 命令行工具：提供规则目录/文件语法自检、单文件与递归目录扫描及 JSON 结构化输出。 |
 
 ---
 
 ## 核心特性
 
 - **零外部依赖**：纯 MoonBit 代码编写，无需任何 C 运行时绑定。
+- **纯 MoonBit Thompson NFA 正则引擎**：
+  - 支持 `/pattern/i` 字面量语法及 `nocase` 修饰符。
+  - 支持常用字符集类：`\d`（数字）、`\w`（单词字符）、`\s`（空白符）及其大写反向类。
+  - 支持自定义区间与字符集：如 `[0-9a-fA-F]`、`[^0-9]` 等。
+  - 支持量词 `*`、`+`、`?`，子模式分组 `(...)` 与分支选择 `|`。
+  - 保证线性时间复杂度，彻底免疫 ReDoS（正则表达式拒绝服务攻击）和递归调用栈溢出。
 - **YARA 核心语法兼容**：
   - 元数据定义（`meta`）：支持字符串、整型及布尔型键值对。
   - 特征字符串定义（`strings`）：
     - 纯文本匹配：支持普通 ASCII 与 `nocase`（忽略大小写）修饰符。
     - 十六进制字节匹配：支持精确字节序列与字节通配符 `??`（如 `{ 4D 5A 90 00 ?? ?? FF }`）。
+    - 正则表达式匹配：`$re = /.../ [nocase]`。
   - 表达式条件系统（`condition`）：
     - 逻辑操作符：`and`, `or`, `not`。
     - 算术与比较：`==`, `!=`, `<`, `<=`, `>`, `>=`。
@@ -95,8 +103,8 @@
     - 集合量词：`any of them`, `all of them`。
     - 文件内置属性：`filesize` 过滤。
 - **Boyer-Moore-Horspool 高速字符跳跃**：针对长文本与特征码预构建跳跃表，大幅提升匹配吞吐。
-- **递归批量目录扫描**：支持 `-R` / `--recursive` 遍历排查整个目录，提供彩色终端汇总与批量 JSON 报告。
-- **双端支持**：编译为原生可执行文件或 Wasm 模块。
+- **规则目录与递归批量文件扫描**：支持 `-r <dir>` 一键加载包含全部规则的目录，支持 `-R` / `--recursive` 遍历排查整个目标文件树，提供彩色终端汇总与批量 JSON 报告。
+- **双端支持与开箱即用 Web 工作台**：编译为原生可执行文件或 Wasm 模块；提供 `examples/wasm_demo/index.html` 浏览器纯本地安全分析工作台，文件拖拽离线扫描，样本隐私绝对安全。
 
 ---
 
@@ -144,17 +152,15 @@ rule Suspicious_Webshell {
 使用 CLI 扫描目标文件或目录：
 
 ```bash
-# 语法检查
+# 语法检查单个规则文件或整个规则目录
 moon run cmd/main -- check test_rule.yar
+moon run cmd/main -- check examples/rules/
 
 # 扫描指定文件
 moon run cmd/main -- scan -r test_rule.yar target_sample.bin
 
-# 以 JSON 格式输出结果
-moon run cmd/main -- scan -r test_rule.yar target_sample.bin --json
-
-# 递归扫描整个目录树并输出批量分析报文
-moon run cmd/main -- scan -r examples/rules/linux_rootkit_artifacts.yar examples/samples/ -R --json
+# 使用整个规则库目录递归扫描目标样本目录，并以 JSON 格式输出报文
+moon run cmd/main -- scan -r examples/rules/ examples/samples/ -R --json
 ```
 
 ---
@@ -163,7 +169,7 @@ moon run cmd/main -- scan -r examples/rules/linux_rootkit_artifacts.yar examples
 
 在你的 MoonBit 项目中直接引入 `moonyara` 作为库使用：
 
-```moonbit
+```moonbit nocheck
 // 编译规则
 let rule_src =
   #|rule Ransom_Note {
@@ -229,23 +235,24 @@ console.log(resultJson);
 
 ```
 moonyara/
-├── moon.mod               # 模块配置
-├── moon.pkg               # 根包配置
-├── LICENSE                # Apache-2.0 开源许可
-├── README.md              # 项目文档与架构说明
-├── cmd/
-│   └── main/              # CLI 命令行程序入口
-│       ├── main.mbt
-│       └── moon.pkg
-├── examples/              # 示例规则集与测试样本
-│   ├── rules/
-│   └── samples/
-├── types.mbt              # 核心 AST 与领域数据类型
-├── lexer.mbt              # 词法分析器
-├── parser.mbt             # 递归下降语法解析器
-├── matcher.mbt            # 字节掩码匹配引擎
-├── eval.mbt               # 条件求值机
-└── engine.mbt             # 顶层扫描引擎 API
+├── .github/workflows/ci.yml # GitHub Actions 持续集成自动化工作流
+├── moon.mod                 # 模块与依赖定义
+├── moon.pkg                 # 核心库包配置
+├── LICENSE                  # Apache-2.0 开源许可协议
+├── README.md                # 完整技术架构与使用说明
+├── types.mbt                # 核心 AST 领域数据模型
+├── lexer.mbt                # 词法分析器（支持通配 Hex 块与正则字面量）
+├── parser.mbt               # 递归下降语法解析器（支持嵌套优先级与包含指令）
+├── regex.mbt                # 纯 MoonBit Thompson NFA 正则引擎与字节码 VM
+├── matcher.mbt              # 模式匹配器（BMH 跳跃表 / 字节掩码 / 正则匹配）
+├── eval.mbt                 # 条件表达式求值机（二进制内省 / 偏移断言 / 集合量词）
+├── engine.mbt               # 顶层扫描引擎 API 门面
+├── cmd/main/                # 原生 CLI 命令行工具实现
+├── wasm/                    # 零依赖 WebAssembly / JS 跨平台导出包
+└── examples/
+    ├── rules/               # 真实威胁特征规则库（Webshell, 勒索信, PowerShell, C2 等）
+    ├── samples/             # 真实配套测试样本库
+    └── wasm_demo/           # 浏览器端与 Node.js WebAssembly 沙箱安全扫描工作台
 ```
 
 ---
