@@ -179,6 +179,43 @@ for match_rule in report.matches {
 }
 ```
 
+## WebAssembly 沙箱运行支持
+
+`moonyara` 原生支持编译至 WebAssembly 并在浏览器、Node.js 或边缘沙箱中运行：
+
+```bash
+# 编译为 WebAssembly 目标产物
+moon build --target wasm
+
+# 或编译为独立 JS 模块
+moon build --target js
+
+# 运行 Node.js 沙箱演示
+node examples/wasm_demo/run_demo.js
+```
+
+调用示例（JavaScript / WebAssembly 环境）：
+
+```javascript
+import * as scanner from './_build/js/debug/build/wasm/wasm.js';
+
+const rule = `
+rule Web_Attack {
+    strings:
+        $sql = "UNION SELECT" nocase
+    condition:
+        $sql
+}
+`;
+
+// 规则语法自检
+const count = scanner.check_rule_syntax(rule);
+
+// 执行沙箱扫描并获取 JSON 报告
+const resultJson = scanner.scan_text_to_json(rule, "GET /?id=1 UNION SELECT 1");
+console.log(resultJson);
+```
+
 ---
 
 ## 目录结构

@@ -1,0 +1,17 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Bobojy00/moonyara/wasm"
+
+// Values
+pub fn check_rule_syntax(String) -> Int
+
+pub fn count_matches(String, String) -> Int
+
+pub fn scan_text_to_json(String, String) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

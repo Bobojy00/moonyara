@@ -1,0 +1,6 @@
+import {
+  "Bobojy00/moonyara" @lib,
+  "moonbitlang/core/encoding/utf8",
+}
+
+pkgtype(kind: "foreign_library")
