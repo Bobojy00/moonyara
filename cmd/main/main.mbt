@@ -28,24 +28,81 @@ fn print_usage() -> Unit {
 }
 
 ///|
-fn handle_check(rule_path : String) -> Unit {
-  let content = @fs.read_file_to_string(rule_path) catch {
-    _ => {
-      println("Error: Failed to read rule file at '\{rule_path}'")
-      return
+fn collect_rule_files(path : String) -> Array[String] {
+  let files : Array[String] = []
+  if !@fs.path_exists(path) {
+    return files
+  }
+  let is_directory = @fs.is_dir(path) catch { _ => false }
+  if !is_directory {
+    files.push(path)
+    return files
+  }
+
+  fn walk(dir : String) -> Unit {
+    let entries = @fs.read_dir(dir) catch { _ => return }
+    for entry in entries {
+      let sep = if dir.has_suffix("/") || dir.has_suffix("\\") {
+        ""
+      } else {
+        "/"
+      }
+      let full = dir + sep + entry
+      let is_sub = @fs.is_dir(full) catch { _ => false }
+      if is_sub {
+        walk(full)
+      } else if full.has_suffix(".yar") || full.has_suffix(".yara") {
+        files.push(full)
+      }
     }
   }
 
-  let engine = @lib.compile(content) catch {
-    err => {
-      println("Syntax Error in rule file '\{rule_path}':")
-      println("  \{err}")
-      return
+  walk(path)
+  files
+}
+
+///|
+fn load_engine_from_path(rule_path : String) -> @lib.Engine? {
+  let rule_files = collect_rule_files(rule_path)
+  if rule_files.length() == 0 {
+    println("Error: No rule file found at '\{rule_path}'")
+    return None
+  }
+
+  let engine = @lib.Engine::new()
+  for file in rule_files {
+    let content = @fs.read_file_to_string(file) catch {
+      _ => {
+        println("Error: Failed to read rule file at '\{file}'")
+        return None
+      }
     }
+    engine.add_rules_from_string(content) catch {
+      err => {
+        println("Syntax Error in rule file '\{file}': \{err}")
+        return None
+      }
+    }
+  }
+
+  Some(engine)
+}
+
+///|
+fn handle_check(rule_path : String) -> Unit {
+  let rule_files = collect_rule_files(rule_path)
+  if rule_files.length() == 0 {
+    println("Error: No rule file found at '\{rule_path}'")
+    return
+  }
+
+  let engine = match load_engine_from_path(rule_path) {
+    Some(e) => e
+    None => return
   }
 
   println(
-    "[+] Rule validation successful: \{engine.rules.length()} rule(s) loaded from '\{rule_path}'",
+    "[+] Rule validation successful: \{engine.rules.length()} rule(s) loaded from \{rule_files.length()} file(s)",
   )
 }
 
@@ -92,18 +149,9 @@ fn handle_scan(
   recursive : Bool,
   is_json : Bool,
 ) -> Unit {
-  let rule_content = @fs.read_file_to_string(rule_path) catch {
-    _ => {
-      println("Error: Failed to read rule file at '\{rule_path}'")
-      return
-    }
-  }
-
-  let engine = @lib.compile(rule_content) catch {
-    err => {
-      println("Syntax Error in rule file '\{rule_path}': \{err}")
-      return
-    }
+  let engine = match load_engine_from_path(rule_path) {
+    Some(e) => e
+    None => return
   }
 
   let files = collect_target_files(target_path, recursive)
