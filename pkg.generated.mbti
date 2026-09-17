@@ -93,6 +93,7 @@ pub(all) struct Engine {
 }
 pub fn Engine::add_rule(Self, Rule) -> Unit
 pub fn Engine::add_rules_from_string(Self, String) -> Unit raise
+pub fn Engine::filter_tags(Self, include_tag? : String, exclude_tag? : String) -> Self
 pub fn Engine::new() -> Self
 pub fn Engine::scan(Self, Bytes) -> ScanReport
 
@@ -123,6 +124,8 @@ pub(all) enum PatternKind {
   Text(String, nocase~ : Bool, wide~ : Bool)
   Hex(Array[Byte], Array[Byte])
   Regex(String, nocase~ : Bool, wide~ : Bool)
+  XorText(String, min_key~ : Int, max_key~ : Int, wide~ : Bool)
+  Base64Text(String, wide~ : Bool)
 } derive(Eq, @debug.Debug)
 
 pub(all) enum RegexInst {
@@ -194,6 +197,8 @@ pub(all) enum TokenKind {
   KwUint32
   KwUint32Be
   KwInclude
+  KwXor
+  KwBase64
   LBrace
   RBrace
   LParen
@@ -208,6 +213,7 @@ pub(all) enum TokenKind {
   Gte
   DotDot
   Comma
+  Minus
   StringLit(String)
   HexBlock(Array[Byte], Array[Byte])
   RegexLit(String, nocase~ : Bool)

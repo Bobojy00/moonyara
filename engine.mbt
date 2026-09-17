@@ -72,3 +72,45 @@ pub fn Engine::scan(self : Engine, target_data : Bytes) -> ScanReport {
 
   { target_size: n, matches: matched_rules }
 }
+
+///|
+/// Returns a new engine containing only rules matching the tag filters.
+pub fn Engine::filter_tags(
+  self : Engine,
+  include_tag? : String,
+  exclude_tag? : String,
+) -> Engine {
+  let filtered : Array[Rule] = []
+  for rule in self.rules {
+    let mut keep = true
+    match include_tag {
+      Some(tag) => {
+        let mut has_tag = false
+        for t in rule.tags {
+          if t == tag {
+            has_tag = true
+            break
+          }
+        }
+        if !has_tag {
+          keep = false
+        }
+      }
+      None => ()
+    }
+    match exclude_tag {
+      Some(tag) =>
+        for t in rule.tags {
+          if t == tag {
+            keep = false
+            break
+          }
+        }
+      None => ()
+    }
+    if keep {
+      filtered.push(rule)
+    }
+  }
+  { rules: filtered }
+}

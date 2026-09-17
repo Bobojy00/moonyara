@@ -70,6 +70,9 @@ fn token_kind_name(kind : TokenKind) -> String {
     KwUint32 => "uint32"
     KwUint32Be => "uint32be"
     KwInclude => "include"
+    KwXor => "xor"
+    KwBase64 => "base64"
+    Minus => "-"
     LBrace => "{"
     RBrace => "}"
     LParen => "("
@@ -201,6 +204,10 @@ fn Parser::parse_rule(self : Parser) -> Rule raise ParseError {
                 StringLit(s) => {
                   let mut nocase = false
                   let mut wide = false
+                  let mut is_xor = false
+                  let mut xor_min = 1
+                  let mut xor_max = 255
+                  let mut is_base64 = false
                   while true {
                     match self.peek().kind {
                       KwNocase => {
@@ -212,10 +219,49 @@ fn Parser::parse_rule(self : Parser) -> Rule raise ParseError {
                         wide = true
                       }
                       KwAscii => ignore(self.advance())
+                      KwXor => {
+                        ignore(self.advance())
+                        is_xor = true
+                        if self.peek().kind == LParen {
+                          ignore(self.advance())
+                          let min_tok = self.advance()
+                          let min_val = match min_tok.kind {
+                            IntLit(v) => v
+                            _ => 1
+                          }
+                          match self.peek().kind {
+                            Minus | DotDot => ignore(self.advance())
+                            _ => ()
+                          }
+                          let max_tok = self.advance()
+                          let max_val = match max_tok.kind {
+                            IntLit(v) => v
+                            _ => 255
+                          }
+                          ignore(self.expect(RParen))
+                          xor_min = min_val
+                          xor_max = max_val
+                        }
+                      }
+                      KwBase64 => {
+                        ignore(self.advance())
+                        is_base64 = true
+                      }
                       _ => break
                     }
                   }
-                  PatternKind::Text(s, nocase~, wide~)
+                  if is_xor {
+                    PatternKind::XorText(
+                      s,
+                      min_key=xor_min,
+                      max_key=xor_max,
+                      wide~,
+                    )
+                  } else if is_base64 {
+                    PatternKind::Base64Text(s, wide~)
+                  } else {
+                    PatternKind::Text(s, nocase~, wide~)
+                  }
                 }
                 HexBlock(targets, masks) => PatternKind::Hex(targets, masks)
                 RegexLit(re_str, nocase~) => {

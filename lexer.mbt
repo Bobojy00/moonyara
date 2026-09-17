@@ -25,6 +25,8 @@ pub(all) enum TokenKind {
   KwUint32
   KwUint32Be
   KwInclude
+  KwXor
+  KwBase64
 
   // Delimiters and operators
   LBrace
@@ -41,6 +43,7 @@ pub(all) enum TokenKind {
   Gte
   DotDot
   Comma
+  Minus
 
   // Literals and identifiers
   StringLit(String)
@@ -521,6 +524,8 @@ fn Lexer::scan_ident(self : Lexer) -> Token {
     "uint32" => TokenKind::KwUint32
     "uint32be" => TokenKind::KwUint32Be
     "include" => TokenKind::KwInclude
+    "xor" => TokenKind::KwXor
+    "base64" => TokenKind::KwBase64
     _ => TokenKind::Ident(text)
   }
 
@@ -610,6 +615,10 @@ pub fn tokenize(input : String) -> Array[Token] raise LexError {
       ',' => {
         ignore(lexer.advance())
         { kind: TokenKind::Comma, line: start_line, col: start_col }
+      }
+      '-' => {
+        ignore(lexer.advance())
+        { kind: TokenKind::Minus, line: start_line, col: start_col }
       }
       '.' =>
         if lexer.peek(offset=1) == Some('.') {

@@ -19,6 +19,8 @@ pub(all) enum PatternKind {
   Text(String, nocase~ : Bool, wide~ : Bool)
   Hex(Array[Byte], Array[Byte]) // (target_bytes, mask_bytes)
   Regex(String, nocase~ : Bool, wide~ : Bool)
+  XorText(String, min_key~ : Int, max_key~ : Int, wide~ : Bool)
+  Base64Text(String, wide~ : Bool)
 } derive(Eq, Debug)
 
 ///|
