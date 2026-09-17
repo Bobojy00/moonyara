@@ -69,6 +69,7 @@ fn token_kind_name(kind : TokenKind) -> String {
     KwUint16Be => "uint16be"
     KwUint32 => "uint32"
     KwUint32Be => "uint32be"
+    KwInclude => "include"
     LBrace => "{"
     RBrace => "}"
     LParen => "("
@@ -85,6 +86,7 @@ fn token_kind_name(kind : TokenKind) -> String {
     Comma => ","
     StringLit(s) => "\"\{s}\""
     HexBlock(_) => "{ <hex bytes> }"
+    RegexLit(re, ..) => "/\{re}/"
     IntLit(i) => i.to_string()
     StringIdent(id) => id
     CountIdent(id) => id
@@ -216,11 +218,30 @@ fn Parser::parse_rule(self : Parser) -> Rule raise ParseError {
                   PatternKind::Text(s, nocase~, wide~)
                 }
                 HexBlock(targets, masks) => PatternKind::Hex(targets, masks)
+                RegexLit(re_str, nocase~) => {
+                  let mut re_nocase = nocase
+                  let mut wide = false
+                  while true {
+                    match self.peek().kind {
+                      KwNocase => {
+                        ignore(self.advance())
+                        re_nocase = true
+                      }
+                      KwWide => {
+                        ignore(self.advance())
+                        wide = true
+                      }
+                      KwAscii => ignore(self.advance())
+                      _ => break
+                    }
+                  }
+                  PatternKind::Regex(re_str, nocase=re_nocase, wide~)
+                }
                 other =>
                   raise ParseError::UnexpectedToken(
                     line=pattern_tok.line,
                     col=pattern_tok.col,
-                    expected="string literal or hex block",
+                    expected="string literal, hex block or regex",
                     found=token_kind_name(other),
                   )
               }
@@ -551,6 +572,21 @@ pub fn parse_rules(tokens : Array[Token]) -> Array[Rule] raise ParseError {
   let rules : Array[Rule] = []
 
   while parser.peek().kind != Eof {
+    if parser.peek().kind == KwInclude {
+      ignore(parser.advance())
+      let inc_tok = parser.advance()
+      match inc_tok.kind {
+        StringLit(_) => ()
+        other =>
+          raise ParseError::UnexpectedToken(
+            line=inc_tok.line,
+            col=inc_tok.col,
+            expected="string literal after include",
+            found=token_kind_name(other),
+          )
+      }
+      continue
+    }
     let rule = parser.parse_rule()
     rules.push(rule)
   }

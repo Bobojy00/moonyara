@@ -8,17 +8,23 @@ import {
 // Values
 pub fn compile(String) -> Engine raise
 
+pub fn compile_regex(String, nocase? : Bool) -> CompiledRegex raise RegexError
+
 pub fn eval_condition(ConditionExpr, EvalContext) -> Bool
 
 pub fn eval_expr(ConditionExpr, EvalContext) -> EvalValue
 
 pub fn match_pattern(Bytes, String, PatternKind) -> Array[StringMatch]
 
+pub fn match_regex_at(CompiledRegex, Bytes, Int) -> Int?
+
 pub fn match_rule_strings(Bytes, Array[StringDef]) -> Map[String, Array[StringMatch]]
 
 pub fn parse_rules(Array[Token]) -> Array[Rule] raise ParseError
 
 pub fn parse_rules_from_string(String) -> Array[Rule] raise
+
+pub fn scan_all_regex(CompiledRegex, Bytes, String) -> Array[StringMatch]
 
 pub fn tokenize(String) -> Array[Token] raise LexError
 
@@ -38,7 +44,20 @@ pub(all) suberror ParseError {
   InvalidExpression(line~ : Int, col~ : Int, msg~ : String)
 } derive(Eq, @debug.Debug)
 
+pub(all) suberror RegexError {
+  UnexpectedEnd
+  InvalidEscape(String)
+  UnclosedGroup
+  UnclosedClass
+  InvalidRange(Char, Char)
+  InvalidRepeat
+} derive(Eq, @debug.Debug)
+
 // Types and methods
+pub(all) struct CompiledRegex {
+  instructions : Array[RegexInst]
+} derive(Eq, @debug.Debug)
+
 pub(all) enum ConditionExpr {
   TrueLit
   FalseLit
@@ -103,6 +122,14 @@ pub(all) enum MetaValue {
 pub(all) enum PatternKind {
   Text(String, nocase~ : Bool, wide~ : Bool)
   Hex(Array[Byte], Array[Byte])
+  Regex(String, nocase~ : Bool, wide~ : Bool)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum RegexInst {
+  MatchByte(FixedArray[Bool])
+  Split(Int, Int)
+  Jump(Int)
+  MatchSuccess
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Rule {
@@ -166,6 +193,7 @@ pub(all) enum TokenKind {
   KwUint16Be
   KwUint32
   KwUint32Be
+  KwInclude
   LBrace
   RBrace
   LParen
@@ -182,6 +210,7 @@ pub(all) enum TokenKind {
   Comma
   StringLit(String)
   HexBlock(Array[Byte], Array[Byte])
+  RegexLit(String, nocase~ : Bool)
   IntLit(Int)
   StringIdent(String)
   CountIdent(String)

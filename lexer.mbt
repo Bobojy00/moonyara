@@ -24,6 +24,7 @@ pub(all) enum TokenKind {
   KwUint16Be
   KwUint32
   KwUint32Be
+  KwInclude
 
   // Delimiters and operators
   LBrace
@@ -44,6 +45,7 @@ pub(all) enum TokenKind {
   // Literals and identifiers
   StringLit(String)
   HexBlock(Array[Byte], Array[Byte]) // (target_bytes, mask_bytes)
+  RegexLit(String, nocase~ : Bool)
   IntLit(Int)
   StringIdent(String) // e.g. "$a"
   CountIdent(String) // e.g. "#a"
@@ -355,6 +357,67 @@ fn Lexer::scan_string(self : Lexer) -> Token raise LexError {
 }
 
 ///|
+fn Lexer::scan_regex(self : Lexer) -> Token raise LexError {
+  let start_line = self.line
+  let start_col = self.col
+  ignore(self.advance()) // Consume leading '/'
+
+  let sb = StringBuilder::new()
+  let mut closed = false
+  let mut in_class = false
+
+  while self.pos < self.input.length() {
+    match self.advance() {
+      Some('/') if !in_class => {
+        closed = true
+        break
+      }
+      Some('[') => {
+        in_class = true
+        sb.write_char('[')
+      }
+      Some(']') => {
+        in_class = false
+        sb.write_char(']')
+      }
+      Some('\\') =>
+        match self.advance() {
+          Some('/') => {
+            sb.write_char('\\')
+            sb.write_char('/')
+          }
+          Some(esc) => {
+            sb.write_char('\\')
+            sb.write_char(esc)
+          }
+          None =>
+            raise LexError::UnterminatedString(line=start_line, col=start_col)
+        }
+      Some(c) => sb.write_char(c)
+      None => raise LexError::UnterminatedString(line=start_line, col=start_col)
+    }
+  }
+
+  if !closed {
+    raise LexError::UnterminatedString(line=start_line, col=start_col)
+  }
+
+  let mut nocase = false
+  while self.pos < self.input.length() {
+    match self.peek() {
+      Some('i') => {
+        ignore(self.advance())
+        nocase = true
+      }
+      Some('s') => ignore(self.advance())
+      _ => break
+    }
+  }
+
+  { kind: RegexLit(sb.to_string(), nocase~), line: start_line, col: start_col }
+}
+
+///|
 fn is_ident_start(c : Char) -> Bool {
   c.is_ascii_alphabetic() || c == '_'
 }
@@ -457,6 +520,7 @@ fn Lexer::scan_ident(self : Lexer) -> Token {
     "uint16be" => TokenKind::KwUint16Be
     "uint32" => TokenKind::KwUint32
     "uint32be" => TokenKind::KwUint32Be
+    "include" => TokenKind::KwInclude
     _ => TokenKind::Ident(text)
   }
 
@@ -510,6 +574,13 @@ pub fn tokenize(input : String) -> Array[Token] raise LexError {
 
     if ch == '{' && lexer.prev_was_assign {
       let tok = lexer.scan_hex_block()
+      tokens.push(tok)
+      lexer.prev_was_assign = false
+      continue
+    }
+
+    if ch == '/' && lexer.prev_was_assign {
+      let tok = lexer.scan_regex()
       tokens.push(tok)
       lexer.prev_was_assign = false
       continue

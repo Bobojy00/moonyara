@@ -87,3 +87,28 @@ test "engine: multiple rules and any of them" {
   assert_eq(report.matches.length(), 1)
   assert_eq(report.matches[0].rule_name, "Script_Marker")
 }
+
+///|
+test "engine: regex pattern matching in YARA rule" {
+  let rule_src =
+    #|rule Powershell_Command_Pattern {
+    #|    strings:
+    #|        $re = /powershell(\.exe)?\s+-enc\s+[A-Za-z0-9+/=]+/ nocase
+    #|    condition:
+    #|        $re
+    #|}
+  let engine = compile(rule_src)
+
+  let malicious_cmd = @utf8.encode(
+    "cmd.exe /c POWERSHELL.EXE -enc SQBFAFgA=="[:],
+  )
+  let report = engine.scan(malicious_cmd)
+  assert_eq(report.matches.length(), 1)
+  assert_eq(report.matches[0].rule_name, "Powershell_Command_Pattern")
+  assert_eq(report.matches[0].matched_strings.length(), 1)
+  assert_eq(report.matches[0].matched_strings[0].identifier, "$re")
+
+  let clean_cmd = @utf8.encode("notepad.exe document.txt"[:])
+  let clean_report = engine.scan(clean_cmd)
+  assert_eq(clean_report.matches.length(), 0)
+}

@@ -161,6 +161,10 @@ pub fn match_pattern(
         }
       }
     }
+    Regex(re_str, nocase~, wide=_) => {
+      let re = compile_regex(re_str, nocase~) catch { _ => return matches }
+      return scan_all_regex(re, target_data, identifier)
+    }
   }
 
   matches

@@ -18,6 +18,7 @@ pub(all) struct MetaEntry {
 pub(all) enum PatternKind {
   Text(String, nocase~ : Bool, wide~ : Bool)
   Hex(Array[Byte], Array[Byte]) // (target_bytes, mask_bytes)
+  Regex(String, nocase~ : Bool, wide~ : Bool)
 } derive(Eq, Debug)
 
 ///|
