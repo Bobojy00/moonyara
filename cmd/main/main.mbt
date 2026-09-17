@@ -4,7 +4,7 @@ fn print_usage() -> Unit {
     #|moonyara - Lightweight YARA Malware Signature Scanner in MoonBit
     #|
     #|Usage:
-    #|  moonyara scan -r <rule_file> <target_path> [-R|--recursive] [--json]
+    #|  moonyara scan -r <rule_file> <target_path> [options]
     #|  moonyara check <rule_file>
     #|  moonyara --help
     #|  moonyara --version
@@ -14,16 +14,18 @@ fn print_usage() -> Unit {
     #|  check    Verify and validate YARA rule syntax
     #|
     #|Options:
-    #|  -r, --rule <path>    Specify path to YARA rules file
-    #|  -R, --recursive      Recursively scan subdirectories
-    #|  --json               Output scan results in JSON format
-    #|  -h, --help           Show this help message
-    #|  -v, --version        Show version information
+    #|  -r, --rule <path>         Specify path to YARA rules file
+    #|  -t, --tag <tag>           Only execute rules matching this tag
+    #|  -e, --exclude-tag <tag>   Exclude rules matching this tag
+    #|  -R, --recursive           Recursively scan subdirectories
+    #|  --json                    Output scan results in JSON format
+    #|  -h, --help                Show this help message
+    #|  -v, --version             Show version information
     #|
     #|Examples:
     #|  moonyara check rules/webshell.yar
     #|  moonyara scan -r rules/webshell.yar suspicious.bin
-    #|  moonyara scan -r rules/malware.yar samples/ -R --json
+    #|  moonyara scan -r rules/malware.yar samples/ -t critical -R --json
   println(usage)
 }
 
@@ -148,11 +150,14 @@ fn handle_scan(
   target_path : String,
   recursive : Bool,
   is_json : Bool,
+  include_tag? : String,
+  exclude_tag? : String,
 ) -> Unit {
-  let engine = match load_engine_from_path(rule_path) {
+  let raw_engine = match load_engine_from_path(rule_path) {
     Some(e) => e
     None => return
   }
+  let engine = raw_engine.filter_tags(include_tag?, exclude_tag?)
 
   let files = collect_target_files(target_path, recursive)
   if files.length() == 0 {
@@ -221,8 +226,14 @@ fn handle_scan(
       println(sb.to_string())
     } else {
       println("[+] Target: '\{target_file}' (\{report.target_size} bytes)")
+      let tag_filter_info = match (include_tag, exclude_tag) {
+        (Some(inc), Some(exc)) => " [filter: +\{inc}, -\{exc}]"
+        (Some(inc), None) => " [filter: +\{inc}]"
+        (None, Some(exc)) => " [filter: -\{exc}]"
+        (None, None) => ""
+      }
       println(
-        "[+] Rules : '\{rule_path}' (\{engine.rules.length()} rules loaded)",
+        "[+] Rules : '\{rule_path}' (\{engine.rules.length()} rules loaded\{tag_filter_info})",
       )
       println("--------------------------------------------------")
       if report.matches.length() == 0 {
@@ -317,8 +328,14 @@ fn handle_scan(
     println(
       "[+] Batch Target: '\{target_path}' (\{files.length()} files collected, recursive: \{recursive})",
     )
+    let tag_filter_info = match (include_tag, exclude_tag) {
+      (Some(inc), Some(exc)) => " [filter: +\{inc}, -\{exc}]"
+      (Some(inc), None) => " [filter: +\{inc}]"
+      (None, Some(exc)) => " [filter: -\{exc}]"
+      (None, None) => ""
+    }
     println(
-      "[+] Active Rules: '\{rule_path}' (\{engine.rules.length()} rules loaded)",
+      "[+] Active Rules: '\{rule_path}' (\{engine.rules.length()} rules loaded\{tag_filter_info})",
     )
     println("--------------------------------------------------")
     if total_threats == 0 {
@@ -375,6 +392,8 @@ fn main {
     "scan" => {
       let mut rule_file : String? = None
       let mut target_path : String? = None
+      let mut include_tag : String? = None
+      let mut exclude_tag : String? = None
       let mut is_json = false
       let mut recursive = false
 
@@ -384,6 +403,18 @@ fn main {
         if arg == "-r" || arg == "--rule" {
           if i + 1 < args.length() {
             rule_file = Some(args[i + 1])
+            i += 2
+            continue
+          }
+        } else if arg == "-t" || arg == "--tag" {
+          if i + 1 < args.length() {
+            include_tag = Some(args[i + 1])
+            i += 2
+            continue
+          }
+        } else if arg == "-e" || arg == "--exclude-tag" {
+          if i + 1 < args.length() {
+            exclude_tag = Some(args[i + 1])
             i += 2
             continue
           }
@@ -404,7 +435,8 @@ fn main {
       }
 
       match (rule_file, target_path) {
-        (Some(rf), Some(tp)) => handle_scan(rf, tp, recursive, is_json)
+        (Some(rf), Some(tp)) =>
+          handle_scan(rf, tp, recursive, is_json, include_tag?, exclude_tag?)
         (None, _) =>
           println(
             "Error: Missing rule file (-r <rule_file>). See 'moonyara --help'.",
