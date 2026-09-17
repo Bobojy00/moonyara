@@ -22,6 +22,9 @@ jobs:
       - name: Show MoonBit Version
         run: moon version --all
 
+      - name: Update Package Index
+        run: moon update
+
       - name: Check Code (All Targets)
         run: moon check --target all --deny-warn
 
