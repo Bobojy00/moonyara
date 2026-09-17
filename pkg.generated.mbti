@@ -61,6 +61,12 @@ pub(all) enum ConditionExpr {
   AllOfThem
   NumOfThem(ConditionExpr)
   NumOfSet(ConditionExpr, Array[String])
+  Uint8(ConditionExpr)
+  Uint16(ConditionExpr)
+  Uint16Be(ConditionExpr)
+  Uint32(ConditionExpr)
+  Uint32Be(ConditionExpr)
+  MatchOffset(String)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Engine {
@@ -72,6 +78,7 @@ pub fn Engine::new() -> Self
 pub fn Engine::scan(Self, Bytes) -> ScanReport
 
 pub(all) struct EvalContext {
+  target_data : Bytes
   target_size : Int
   string_matches : Map[String, Array[StringMatch]]
   all_strings : Array[StringDef]
@@ -154,6 +161,11 @@ pub(all) enum TokenKind {
   KwFilesize
   KwTrue
   KwFalse
+  KwUint8
+  KwUint16
+  KwUint16Be
+  KwUint32
+  KwUint32Be
   LBrace
   RBrace
   LParen
@@ -173,6 +185,7 @@ pub(all) enum TokenKind {
   IntLit(Int)
   StringIdent(String)
   CountIdent(String)
+  OffsetIdent(String)
   Ident(String)
   Eof
 } derive(Eq, @debug.Debug)

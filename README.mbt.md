@@ -89,9 +89,13 @@
     - 逻辑操作符：`and`, `or`, `not`。
     - 算术与比较：`==`, `!=`, `<`, `<=`, `>`, `>=`。
     - 字符串状态与计数：`$a`, `#a >= 2`。
+    - 字符串首次偏移：`@a`。
+    - 二进制内省原语：`uint8(offset)`, `uint16(offset)`, `uint16be(offset)`, `uint32(offset)`, `uint32be(offset)`，支持多层嵌套解引用。
     - 偏移位置断言：`$a at 0`, `$a in (0..1024)`。
     - 集合量词：`any of them`, `all of them`。
     - 文件内置属性：`filesize` 过滤。
+- **Boyer-Moore-Horspool 高速字符跳跃**：针对长文本与特征码预构建跳跃表，大幅提升匹配吞吐。
+- **递归批量目录扫描**：支持 `-R` / `--recursive` 遍历排查整个目录，提供彩色终端汇总与批量 JSON 报告。
 - **双端支持**：编译为原生可执行文件或 Wasm 模块。
 
 ---
@@ -137,7 +141,7 @@ rule Suspicious_Webshell {
 }
 ```
 
-使用 CLI 扫描目标文件：
+使用 CLI 扫描目标文件或目录：
 
 ```bash
 # 语法检查
@@ -148,6 +152,9 @@ moon run cmd/main -- scan -r test_rule.yar target_sample.bin
 
 # 以 JSON 格式输出结果
 moon run cmd/main -- scan -r test_rule.yar target_sample.bin --json
+
+# 递归扫描整个目录树并输出批量分析报文
+moon run cmd/main -- scan -r examples/rules/linux_rootkit_artifacts.yar examples/samples/ -R --json
 ```
 
 ---
