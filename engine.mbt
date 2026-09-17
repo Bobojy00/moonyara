@@ -44,6 +44,7 @@ pub fn Engine::scan(self : Engine, target_data : Bytes) -> ScanReport {
   for rule in self.rules {
     let match_map = match_rule_strings(target_data, rule.strings)
     let ctx : EvalContext = {
+      target_data,
       target_size: n,
       string_matches: match_map,
       all_strings: rule.strings,

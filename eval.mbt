@@ -22,16 +22,74 @@ fn EvalValue::as_int(self : EvalValue) -> Int {
 }
 
 ///|
-/// Context containing target size and pattern match records for evaluation.
+/// Context containing target data, size, and pattern match records for evaluation.
 pub(all) struct EvalContext {
+  target_data : Bytes
   target_size : Int
   string_matches : Map[String, Array[StringMatch]]
   all_strings : Array[StringDef]
 }
 
 ///|
+fn read_u8(bytes : Bytes, offset : Int) -> Int {
+  if offset < 0 || offset >= bytes.length() {
+    -1
+  } else {
+    bytes[offset].to_int()
+  }
+}
+
+///|
+fn read_u16_le(bytes : Bytes, offset : Int) -> Int {
+  if offset < 0 || offset + 2 > bytes.length() {
+    -1
+  } else {
+    let b0 = bytes[offset].to_int()
+    let b1 = bytes[offset + 1].to_int()
+    b0 | (b1 << 8)
+  }
+}
+
+///|
+fn read_u16_be(bytes : Bytes, offset : Int) -> Int {
+  if offset < 0 || offset + 2 > bytes.length() {
+    -1
+  } else {
+    let b0 = bytes[offset].to_int()
+    let b1 = bytes[offset + 1].to_int()
+    (b0 << 8) | b1
+  }
+}
+
+///|
+fn read_u32_le(bytes : Bytes, offset : Int) -> Int {
+  if offset < 0 || offset + 4 > bytes.length() {
+    -1
+  } else {
+    let b0 = bytes[offset].to_int()
+    let b1 = bytes[offset + 1].to_int()
+    let b2 = bytes[offset + 2].to_int()
+    let b3 = bytes[offset + 3].to_int()
+    b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)
+  }
+}
+
+///|
+fn read_u32_be(bytes : Bytes, offset : Int) -> Int {
+  if offset < 0 || offset + 4 > bytes.length() {
+    -1
+  } else {
+    let b0 = bytes[offset].to_int()
+    let b1 = bytes[offset + 1].to_int()
+    let b2 = bytes[offset + 2].to_int()
+    let b3 = bytes[offset + 3].to_int()
+    (b0 << 24) | (b1 << 16) | (b2 << 8) | b3
+  }
+}
+
+///|
 fn normalize_var_id(id : String) -> String {
-  if id.length() > 0 && id[0] == '#' {
+  if id.length() > 0 && (id[0] == '#' || id[0] == '@') {
     "$" + id.sub(start=1).to_owned()
   } else {
     id
@@ -169,6 +227,33 @@ pub fn eval_expr(expr : ConditionExpr, ctx : EvalContext) -> EvalValue {
         }
       }
       VBool(count >= required)
+    }
+    Uint8(offset_expr) => {
+      let off = eval_expr(offset_expr, ctx).as_int()
+      VInt(read_u8(ctx.target_data, off))
+    }
+    Uint16(offset_expr) => {
+      let off = eval_expr(offset_expr, ctx).as_int()
+      VInt(read_u16_le(ctx.target_data, off))
+    }
+    Uint16Be(offset_expr) => {
+      let off = eval_expr(offset_expr, ctx).as_int()
+      VInt(read_u16_be(ctx.target_data, off))
+    }
+    Uint32(offset_expr) => {
+      let off = eval_expr(offset_expr, ctx).as_int()
+      VInt(read_u32_le(ctx.target_data, off))
+    }
+    Uint32Be(offset_expr) => {
+      let off = eval_expr(offset_expr, ctx).as_int()
+      VInt(read_u32_be(ctx.target_data, off))
+    }
+    MatchOffset(id) => {
+      let var_id = normalize_var_id(id)
+      match ctx.string_matches.get(var_id) {
+        Some(arr) if arr.length() > 0 => VInt(arr[0].offset)
+        _ => VInt(-1)
+      }
     }
   }
 }

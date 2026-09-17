@@ -51,6 +51,12 @@ pub(all) enum ConditionExpr {
   AllOfThem // all of them
   NumOfThem(ConditionExpr) // N of them
   NumOfSet(ConditionExpr, Array[String]) // N of ($a, $b)
+  Uint8(ConditionExpr)
+  Uint16(ConditionExpr)
+  Uint16Be(ConditionExpr)
+  Uint32(ConditionExpr)
+  Uint32Be(ConditionExpr)
+  MatchOffset(String) // e.g. "@a"
 } derive(Eq, Debug)
 
 ///|

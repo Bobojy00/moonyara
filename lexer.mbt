@@ -19,6 +19,11 @@ pub(all) enum TokenKind {
   KwFilesize
   KwTrue
   KwFalse
+  KwUint8
+  KwUint16
+  KwUint16Be
+  KwUint32
+  KwUint32Be
 
   // Delimiters and operators
   LBrace
@@ -42,6 +47,7 @@ pub(all) enum TokenKind {
   IntLit(Int)
   StringIdent(String) // e.g. "$a"
   CountIdent(String) // e.g. "#a"
+  OffsetIdent(String) // e.g. "@a"
   Ident(String) // e.g. "RuleName", "author"
   Eof
 } derive(Eq, Debug)
@@ -446,6 +452,11 @@ fn Lexer::scan_ident(self : Lexer) -> Token {
     "filesize" => TokenKind::KwFilesize
     "true" => TokenKind::KwTrue
     "false" => TokenKind::KwFalse
+    "uint8" => TokenKind::KwUint8
+    "uint16" => TokenKind::KwUint16
+    "uint16be" => TokenKind::KwUint16Be
+    "uint32" => TokenKind::KwUint32
+    "uint32be" => TokenKind::KwUint32Be
     _ => TokenKind::Ident(text)
   }
 
@@ -456,7 +467,7 @@ fn Lexer::scan_ident(self : Lexer) -> Token {
 fn Lexer::scan_variable(self : Lexer, prefix : Char) -> Token {
   let start_line = self.line
   let start_col = self.col
-  ignore(self.advance()) // Consume '$' or '#'
+  ignore(self.advance()) // Consume '$', '#', or '@'
 
   let sb = StringBuilder::new()
   sb.write_char(prefix)
@@ -471,10 +482,10 @@ fn Lexer::scan_variable(self : Lexer, prefix : Char) -> Token {
   }
 
   let text = sb.to_string()
-  let kind = if prefix == '$' {
-    TokenKind::StringIdent(text)
-  } else {
-    TokenKind::CountIdent(text)
+  let kind = match prefix {
+    '$' => TokenKind::StringIdent(text)
+    '#' => TokenKind::CountIdent(text)
+    _ => TokenKind::OffsetIdent(text)
   }
 
   { kind, line: start_line, col: start_col }
@@ -585,6 +596,7 @@ pub fn tokenize(input : String) -> Array[Token] raise LexError {
       '"' => lexer.scan_string()
       '$' => lexer.scan_variable('$')
       '#' => lexer.scan_variable('#')
+      '@' => lexer.scan_variable('@')
       c if c.is_ascii_digit() => lexer.scan_number()
       c if is_ident_start(c) => lexer.scan_ident()
       other => {

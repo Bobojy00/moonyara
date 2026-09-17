@@ -64,6 +64,11 @@ fn token_kind_name(kind : TokenKind) -> String {
     KwFilesize => "filesize"
     KwTrue => "true"
     KwFalse => "false"
+    KwUint8 => "uint8"
+    KwUint16 => "uint16"
+    KwUint16Be => "uint16be"
+    KwUint32 => "uint32"
+    KwUint32Be => "uint32be"
     LBrace => "{"
     RBrace => "}"
     LParen => "("
@@ -83,6 +88,7 @@ fn token_kind_name(kind : TokenKind) -> String {
     IntLit(i) => i.to_string()
     StringIdent(id) => id
     CountIdent(id) => id
+    OffsetIdent(id) => id
     Ident(id) => id
     Eof => "<EOF>"
   }
@@ -482,6 +488,45 @@ fn Parser::parse_primary(self : Parser) -> ConditionExpr raise ParseError {
     CountIdent(id) => {
       ignore(self.advance())
       ConditionExpr::MatchCount(id)
+    }
+    OffsetIdent(id) => {
+      ignore(self.advance())
+      ConditionExpr::MatchOffset(id)
+    }
+    KwUint8 => {
+      ignore(self.advance())
+      ignore(self.expect(LParen))
+      let offset_expr = self.parse_condition_expr()
+      ignore(self.expect(RParen))
+      ConditionExpr::Uint8(offset_expr)
+    }
+    KwUint16 => {
+      ignore(self.advance())
+      ignore(self.expect(LParen))
+      let offset_expr = self.parse_condition_expr()
+      ignore(self.expect(RParen))
+      ConditionExpr::Uint16(offset_expr)
+    }
+    KwUint16Be => {
+      ignore(self.advance())
+      ignore(self.expect(LParen))
+      let offset_expr = self.parse_condition_expr()
+      ignore(self.expect(RParen))
+      ConditionExpr::Uint16Be(offset_expr)
+    }
+    KwUint32 => {
+      ignore(self.advance())
+      ignore(self.expect(LParen))
+      let offset_expr = self.parse_condition_expr()
+      ignore(self.expect(RParen))
+      ConditionExpr::Uint32(offset_expr)
+    }
+    KwUint32Be => {
+      ignore(self.advance())
+      ignore(self.expect(LParen))
+      let offset_expr = self.parse_condition_expr()
+      ignore(self.expect(RParen))
+      ConditionExpr::Uint32Be(offset_expr)
     }
     LParen => {
       ignore(self.advance())
