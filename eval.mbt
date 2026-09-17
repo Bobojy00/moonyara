@@ -90,7 +90,7 @@ fn read_u32_be(bytes : Bytes, offset : Int) -> Int {
 ///|
 fn normalize_var_id(id : String) -> String {
   if id.length() > 0 && (id[0] == '#' || id[0] == '@') {
-    "$" + id.sub(start=1).to_owned()
+    "$" + id[1:].to_owned()
   } else {
     id
   }

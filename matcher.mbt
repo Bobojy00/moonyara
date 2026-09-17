@@ -85,7 +85,7 @@ fn match_exact_bytes(
 fn encode_base64_segment(bytes : Array[Byte], start : Int, len : Int) -> String {
   let table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
   let table_chars = table.to_array()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = start
   let end_idx = start + len
   while i < end_idx {
@@ -139,7 +139,7 @@ fn generate_base64_patterns(s : String) -> Array[String] {
     let b64 = encode_base64_segment(b1, 0, full_blocks)
     if b64.length() > 2 {
       let chars = b64.to_array()
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for k = 2; k < chars.length(); k = k + 1 {
         sb.write_char(chars[k])
       }
@@ -157,7 +157,7 @@ fn generate_base64_patterns(s : String) -> Array[String] {
     let b64 = encode_base64_segment(b2, 0, full_blocks)
     if b64.length() > 3 {
       let chars = b64.to_array()
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for k = 3; k < chars.length(); k = k + 1 {
         sb.write_char(chars[k])
       }

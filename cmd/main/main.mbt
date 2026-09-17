@@ -181,7 +181,7 @@ fn handle_scan(
     }
     let report = engine.scan(target_bytes)
     if is_json {
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       sb.write_string("{\n")
       sb.write_string("  \"target\": \"\{target_file}\",\n")
       sb.write_string("  \"size\": \{report.target_size},\n")
@@ -241,7 +241,7 @@ fn handle_scan(
       } else {
         for m in report.matches {
           let tag_info = if m.tags.length() > 0 {
-            let tb = StringBuilder::new()
+            let tb = StringBuilder()
             for t in m.tags {
               tb.write_string(" ")
               tb.write_string(t)
@@ -280,7 +280,7 @@ fn handle_scan(
   }
 
   if is_json {
-    let sb = StringBuilder::new()
+    let sb = StringBuilder()
     sb.write_string("{\n")
     sb.write_string("  \"scan_target\": \"\{target_path}\",\n")
     sb.write_string("  \"files_scanned\": \{files.length()},\n")

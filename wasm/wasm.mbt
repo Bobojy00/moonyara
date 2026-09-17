@@ -1,6 +1,6 @@
 ///|
 fn format_report_json(report : @lib.ScanReport) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\n")
   sb.write_string("  \"size\": \{report.target_size},\n")
   sb.write_string("  \"matches_count\": \{report.matches.length()},\n")

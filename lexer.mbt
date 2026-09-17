@@ -308,7 +308,7 @@ fn Lexer::scan_string(self : Lexer) -> Token raise LexError {
   let start_col = self.col
   ignore(self.advance()) // Consume opening '"'
 
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   while true {
     match self.advance() {
       None => raise LexError::UnterminatedString(line=start_line, col=start_col)
@@ -365,7 +365,7 @@ fn Lexer::scan_regex(self : Lexer) -> Token raise LexError {
   let start_col = self.col
   ignore(self.advance()) // Consume leading '/'
 
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut closed = false
   let mut in_class = false
 
@@ -488,7 +488,7 @@ fn Lexer::scan_ident(self : Lexer) -> Token {
   let start_line = self.line
   let start_col = self.col
 
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   while self.pos < self.input.length() {
     match self.peek() {
       Some(c) if is_ident_continue(c) => {
@@ -538,7 +538,7 @@ fn Lexer::scan_variable(self : Lexer, prefix : Char) -> Token {
   let start_col = self.col
   ignore(self.advance()) // Consume '$', '#', or '@'
 
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_char(prefix)
   while self.pos < self.input.length() {
     match self.peek() {
