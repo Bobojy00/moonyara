@@ -195,3 +195,73 @@ textarea:focus {
   padding: 8px 12px;
   background-color: rgba(63, 185, 80, 0.05);
 }
+
+.hex-dump-container {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  max-height: 380px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.hex-dump-placeholder {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px;
+}
+
+.hex-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.hex-row:hover {
+  background-color: rgba(110, 118, 129, 0.1);
+}
+
+.hex-offset {
+  color: var(--accent);
+  min-width: 80px;
+  user-select: none;
+}
+
+.hex-bytes {
+  display: grid;
+  grid-template-columns: repeat(16, 24px);
+  gap: 4px;
+}
+
+.hex-byte {
+  text-align: center;
+  color: var(--text-main);
+  border-radius: 2px;
+}
+
+.hex-byte.matched {
+  background-color: rgba(248, 81, 73, 0.35);
+  color: #ff7b72;
+  font-weight: bold;
+}
+
+.hex-ascii {
+  color: #7ee787;
+  letter-spacing: 2px;
+  margin-left: 8px;
+  border-left: 1px solid var(--border-color);
+  padding-left: 12px;
+  white-space: pre;
+}
+
+.hex-ascii-char.matched {
+  background-color: rgba(248, 81, 73, 0.35);
+  color: #ff7b72;
+  font-weight: bold;
+}
+

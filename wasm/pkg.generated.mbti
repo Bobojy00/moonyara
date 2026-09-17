@@ -6,6 +6,8 @@ pub fn check_rule_syntax(String) -> Int
 
 pub fn count_matches(String, String) -> Int
 
+pub fn scan_hex_to_json(String, String) -> String
+
 pub fn scan_text_to_json(String, String) -> String
 
 // Errors
