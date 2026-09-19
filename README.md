@@ -1,7 +1,7 @@
 # moonyara
 
 <p align="center">
-  <b>纯 MoonBit 实现的轻量级 YARA 恶意特征检测引擎</b><br>
+  <b>以 MoonBit 实现的轻量级 YARA 恶意特征检测引擎</b><br>
   A lightweight, zero-dependency YARA-compatible malware signature scanner written in MoonBit.
 </p>
 
@@ -113,12 +113,12 @@
 
 ## 一键实战演示与交互体验 (Demo)
 
-`moonyara` 提供了开箱即用的**2分钟实战演示视频**、**浏览器端 WebAssembly 交互式安全工作台**以及**终端全流程实战演示**：
+`moonyara` 提供了约2分钟演示视频展示了与浏览器端 WebAssembly 的安全平台交互
 
-### 1. 2分钟实战效果演示视频
+### 1. 2分钟演示视频
 
 - **视频文件**：[`demo.mp4`](demo.mp4)
-- **演示内容**：全流程实机呈现 YARA 规则语法解析自检、Thompson NFA 正则 0.14ms 极限扫描与抗 ReDoS 免疫、PE 结构内省、单字节 XOR 与 Base64 反混淆、浏览器端 WebAssembly 纯本地沙箱研判与 Hex Dump 区域标红，以及全资产目录递归审计。
+- **演示内容**：全流程实机呈现 YARA 规则语法解析自检、Thompson NFA 正则 0.14ms 极限扫描与抗 ReDoS 免疫、PE 结构内省、单字节 XOR 与 Base64 反混淆、浏览器端 WebAssembly 纯本地沙箱研判与 Hex Dump 区域标红。
 
 ### 2. 浏览器端 WebAssembly 安全特征扫描工作台 (Web Demo)
 
