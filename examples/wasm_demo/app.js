@@ -173,7 +173,7 @@ function renderHexDump(bytes, matchedRanges) {
     return;
   }
 
-  hexMeta.textContent = `总计 ${bytes.length} 字节 | 标定命中区间: ${matchedRanges.length} 个`;
+  hexMeta.textContent = `总计 ${bytes.length} 字节 | 命中区间: ${matchedRanges.length} 个`;
 
   const fragment = document.createDocumentFragment();
   const chunkSize = 16;
@@ -255,9 +255,9 @@ scanBtn.addEventListener("click", () => {
     const matchedRanges = [];
 
     if (report.matches_count > 0) {
-      matchSummary.textContent = `检出 ${report.matches_count} 条威胁规则命中！`;
+      matchSummary.textContent = `命中 ${report.matches_count} 条规则`;
       matchSummary.style.color = "#f85149";
-      let formatted = `=================== 威胁检出报告 ===================\n`;
+      let formatted = `=================== 扫描报告 ===================\n`;
       formatted += `扫描数据大小: ${report.size} 字节\n`;
       formatted += `命中规则总数: ${report.matches_count}\n\n`;
 
@@ -266,7 +266,7 @@ scanBtn.addEventListener("click", () => {
         if (m.tags && m.tags.length > 0) {
           formatted += `    标签: ${m.tags.join(", ")}\n`;
         }
-        formatted += `    匹配字符串清单:\n`;
+        formatted += `    匹配特征:\n`;
         for (const s of m.strings) {
           formatted += `      - 标识: ${s.id} | 偏移量: ${s.offset} | 匹配长度: ${s.length}\n`;
           matchedRanges.push({ start: s.offset, end: s.offset + s.length });
@@ -276,9 +276,9 @@ scanBtn.addEventListener("click", () => {
 
       reportOutput.textContent = formatted;
     } else {
-      matchSummary.textContent = "未发现匹配特征（干净样本）";
+      matchSummary.textContent = "未匹配到规则";
       matchSummary.style.color = "#3fb950";
-      reportOutput.textContent = `[+] 扫描完成：目标数据 (${report.size} 字节) 未命中任何已配置的规则特征。`;
+      reportOutput.textContent = `[+] 扫描完成：目标数据 (${report.size} 字节) 未命中任何规则。`;
     }
 
     renderHexDump(bytes, matchedRanges);

@@ -63,12 +63,12 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log('===============================================================');
-  console.log('  moonyara - 浏览器端 WebAssembly 安全特征扫描演示工作台');
+  console.log('  moonyara - 浏览器端 WebAssembly 扫描演示');
   console.log('===============================================================');
   console.log(`  [+] 本地演示服务已启动: ${url}`);
-  console.log('  [+] 纯前端本地离线沙箱运行，无需外部网络依赖');
-  console.log('  [+] 支持 YARA 规则实时校验、攻击载荷检测与十六进制 Hex Dump');
-  console.log('  [+] 按 Ctrl+C 可停止本地演示服务');
+  console.log('  [+] 本地运行，无需外部网络依赖');
+  console.log('  [+] 支持 YARA 规则校验、样本匹配与十六进制 Hex 转储');
+  console.log('  [+] 按 Ctrl+C 可停止本地服务');
   console.log('===============================================================');
 
   const openCmd = process.platform === 'win32' ? `start ${url}` :

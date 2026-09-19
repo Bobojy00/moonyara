@@ -1,7 +1,7 @@
 # moonyara
 
 <p align="center">
-  <b>纯 MoonBit 实现的轻量级 YARA 恶意特征检测引擎</b><br>
+  <b>以 MoonBit 实现的轻量级 YARA 恶意特征检测引擎</b><br>
   A lightweight, zero-dependency YARA-compatible malware signature scanner written in MoonBit.
 </p>
 
@@ -69,8 +69,8 @@
 | :--- | :--- |
 | **`types`** | 统一领域模型：定义规则、元数据、特征字符串类型（文本/Hex/正则）、条件表达式树与扫描报告结构。 |
 | **`lexer`** | 高效词法分析器：支持关键字、标识符、带转义字符串、十六进制通配块 `{ 4D 5A ?? 90 }` 与 `/regex/` 分词。 |
-| **`parser`** | 递归下降语法解析器：运用运算符优先级爬升算法，精准解析复杂的嵌套布尔表达式、多规则与包含引用。 |
-| **`regex`** | 纯 MoonBit Thompson NFA 正则引擎：支持 `\d`、`\w`、`\s`、字符集范围 `[a-z]`、量词 `* + ?`、分组分支 `(a|b)`，线性时间复杂度彻底免疫 ReDoS。 |
+| **`parser`** | 递归下降语法解析器：运用运算符优先级爬升算法，解析嵌套布尔表达式、多规则与包含引用。 |
+| **`regex`** | 纯 MoonBit Thompson NFA 正则引擎：支持 `\d`、`\w`、`\s`、字符集范围 `[a-z]`、量词 `* + ?`、分组分支 `(a|b)`，线性时间复杂度，避免 ReDoS。 |
 | **`matcher`** | 模式匹配引擎：综合 Boyer-Moore-Horspool 文本跳跃、Hex 字节掩码位运算与 NFA 正则字节码扫描。 |
 | **`eval`** | 条件求值机：计算命中计数（`#a > 2`）、绝对/区间偏移（`$a at 0`、`$a in (0..1024)`）、二进制内省（`uint8/16/32`）与量词。 |
 | **`engine`** | 核心对外门面：统一串联规则编译流程、目录多规则合并与扫描管道。 |
@@ -86,7 +86,7 @@
   - 支持常用字符集类：`\d`（数字）、`\w`（单词字符）、`\s`（空白符）及其大写反向类。
   - 支持自定义区间与字符集：如 `[0-9a-fA-F]`、`[^0-9]` 等。
   - 支持量词 `*`、`+`、`?`，子模式分组 `(...)` 与分支选择 `|`。
-  - 保证线性时间复杂度，彻底免疫 ReDoS（正则表达式拒绝服务攻击）和递归调用栈溢出。
+  - 保证线性时间复杂度，避免 ReDoS（正则表达式拒绝服务攻击）和递归调用栈溢出。
 - **YARA 核心语法兼容**：
   - 元数据定义（`meta`）：支持字符串、整型及布尔型键值对。
   - 特征字符串定义（`strings`）：
@@ -102,9 +102,9 @@
     - 偏移位置断言：`$a at 0`, `$a in (0..1024)`。
     - 集合量词：`any of them`, `all of them`。
     - 文件内置属性：`filesize` 过滤。
-- **Boyer-Moore-Horspool 高速字符跳跃**：针对长文本与特征码预构建跳跃表，大幅提升匹配吞吐。
-- **规则目录与递归批量文件扫描**：支持 `-r <dir>` 一键加载包含全部规则的目录，支持 `-R` / `--recursive` 遍历排查整个目标文件树，提供彩色终端汇总与批量 JSON 报告。
-- **双端支持与开箱即用 Web 工作台**：编译为原生可执行文件或 Wasm 模块；提供 `examples/wasm_demo/index.html` 浏览器纯本地安全分析工作台，文件拖拽离线扫描，样本隐私绝对安全。
+- **Boyer-Moore-Horspool 算法**：针对长字符串预构建坏字符跳跃表，提升文本匹配效率。
+- **规则目录与递归文件扫描**：支持 `-r <dir>` 加载规则目录，支持 `-R` / `--recursive` 递归遍历扫描整个目标目录，提供终端汇总与 JSON 格式报告。
+- **双端支持与网页界面**：支持编译为原生命令行工具与 WebAssembly 模块；提供 `examples/wasm_demo/index.html` 网页扫描界面，支持 Hex Dump 与特征高亮，待检文件无需上传服务器。
 
 ---
 
@@ -240,9 +240,7 @@ moonyara/
 ├── moon.pkg                 # 核心库包配置
 ├── LICENSE                  # Apache-2.0 开源许可协议
 ├── README.md                # 完整技术架构与使用说明
-├── demo.mp4                 # 2分钟实战演示视频
-├── run_web_demo.bat         # 浏览器端 WebAssembly 安全工作台一键启动脚本
-├── run_cli_demo.bat         # 命令行多场景全景演练一键启动脚本
+├── demo.mp4                 # 演示视频
 ├── types.mbt                # 核心 AST 领域数据模型
 ├── lexer.mbt                # 词法分析器（支持通配 Hex 块与正则字面量）
 ├── parser.mbt               # 递归下降语法解析器（支持嵌套优先级与包含指令）
@@ -252,11 +250,11 @@ moonyara/
 ├── engine.mbt               # 顶层扫描引擎 API 门面
 ├── cmd/main/                # 原生 CLI 命令行工具实现
 ├── wasm/                    # 零依赖 WebAssembly / JS 跨平台导出包
-├── scripts/                 # 演示与本地服务脚本 (Web 演示服务 / CLI 交互演练)
+├── scripts/                 # 演示脚本与本地 HTTP 服务
 └── examples/
-    ├── rules/               # 真实威胁特征规则库（Webshell, 勒索信, PowerShell, C2 等）
-    ├── samples/             # 真实配套测试样本库
-    └── wasm_demo/           # 浏览器端与 Node.js WebAssembly 沙箱安全扫描工作台
+    ├── rules/               # 常见威胁特征规则库（Webshell, 勒索信, PowerShell, C2 等）
+    ├── samples/             # 配套测试样本库
+    └── wasm_demo/           # 浏览器端与 Node.js WebAssembly 演示界面
 ```
 
 ---
