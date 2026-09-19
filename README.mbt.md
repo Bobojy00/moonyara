@@ -240,6 +240,7 @@ moonyara/
 ├── moon.pkg                 # 核心库包配置
 ├── LICENSE                  # Apache-2.0 开源许可协议
 ├── README.md                # 完整技术架构与使用说明
+├── demo.mp4                 # 2分钟实战演示视频
 ├── run_web_demo.bat         # 浏览器端 WebAssembly 安全工作台一键启动脚本
 ├── run_cli_demo.bat         # 命令行多场景全景演练一键启动脚本
 ├── types.mbt                # 核心 AST 领域数据模型

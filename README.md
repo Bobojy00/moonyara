@@ -113,9 +113,14 @@
 
 ## 一键实战演示与交互体验 (Demo)
 
-`moonyara` 提供了开箱即用的**终端全流程实战演示**与**浏览器端 WebAssembly 交互式安全工作台**：
+`moonyara` 提供了开箱即用的**2分钟实战演示视频**、**浏览器端 WebAssembly 交互式安全工作台**以及**终端全流程实战演示**：
 
-### 1. 浏览器端 WebAssembly 安全特征扫描工作台 (Web Demo)
+### 1. 2分钟实战效果演示视频
+
+- **视频文件**：[`demo.mp4`](demo.mp4)
+- **演示内容**：全流程实机呈现 YARA 规则语法解析自检、Thompson NFA 正则 0.14ms 极限扫描与抗 ReDoS 免疫、PE 结构内省、单字节 XOR 与 Base64 反混淆、浏览器端 WebAssembly 纯本地沙箱研判与 Hex Dump 区域标红，以及全资产目录递归审计。
+
+### 2. 浏览器端 WebAssembly 安全特征扫描工作台 (Web Demo)
 
 无需任何后端依赖，纯前端本地离线沙箱运行，保障待测样本与规则隐私安全：
 
@@ -127,7 +132,7 @@
   - 支持直接将本地任意待测文件拖拽到页面进行离线检测。
   - 实时输出 Hex Dump 十六进制双栏转储与 ASCII 边栏，即时高亮标定威胁命中区间。
 
-### 2. 命令行多场景全景演练 (CLI Demo)
+### 3. 命令行多场景全景演练 (CLI Demo)
 
 - **一键演练**：双击运行根目录下的 `run_cli_demo.bat`（或执行 `node scripts/cli_demo.js`）。
 - **演练覆盖**：
@@ -278,6 +283,7 @@ moonyara/
 ├── moon.pkg                 # 核心库包配置
 ├── LICENSE                  # Apache-2.0 开源许可协议
 ├── README.md                # 完整技术架构与使用说明
+├── demo.mp4                 # 2分钟实战演示视频
 ├── run_web_demo.bat         # 浏览器端 WebAssembly 安全工作台一键启动脚本
 ├── run_cli_demo.bat         # 命令行多场景全景演练一键启动脚本
 ├── types.mbt                # 核心 AST 领域数据模型
