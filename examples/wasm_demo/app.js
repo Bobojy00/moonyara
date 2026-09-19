@@ -107,23 +107,9 @@ const validateBtn = document.getElementById("validateBtn");
 const scanBtn = document.getElementById("scanBtn");
 const dropZone = document.getElementById("dropZone");
 
-// Initialize with default template
-ruleInput.value = TEMPLATES.webshell;
-sampleInput.value = SAMPLES.webshell_malicious;
-
-try {
-  const count = scanner.check_rule_syntax(ruleInput.value);
-  if (count >= 0) {
-    engineStatus.textContent = "MoonBit WebAssembly 引擎已就绪";
-    engineStatus.style.color = "#3fb950";
-  }
-} catch (e) {
-  engineStatus.textContent = "引擎初始化失败: " + e;
-  engineStatus.style.color = "#f85149";
-}
-
 function updateTemplateSelection(key) {
   if (TEMPLATES[key]) {
+    templateSelect.value = key;
     ruleInput.value = TEMPLATES[key];
     const malKey = `${key}_malicious`;
     if (SAMPLES[malKey]) {
@@ -133,6 +119,11 @@ function updateTemplateSelection(key) {
     }
   }
 }
+
+// Check query param e.g. ?t=xor
+const urlParams = new URLSearchParams(window.location.search);
+const initialTemplate = urlParams.get("t") || "webshell";
+updateTemplateSelection(initialTemplate);
 
 templateSelect.addEventListener("change", (e) => {
   updateTemplateSelection(e.target.value);
@@ -321,3 +312,7 @@ dropZone.addEventListener("drop", (e) => {
     reader.readAsText(file);
   }
 });
+
+// Auto-trigger initial scan for instant visual presentation
+scanBtn.click();
+

@@ -240,6 +240,8 @@ moonyara/
 ├── moon.pkg                 # 核心库包配置
 ├── LICENSE                  # Apache-2.0 开源许可协议
 ├── README.md                # 完整技术架构与使用说明
+├── run_web_demo.bat         # 浏览器端 WebAssembly 安全工作台一键启动脚本
+├── run_cli_demo.bat         # 命令行多场景全景演练一键启动脚本
 ├── types.mbt                # 核心 AST 领域数据模型
 ├── lexer.mbt                # 词法分析器（支持通配 Hex 块与正则字面量）
 ├── parser.mbt               # 递归下降语法解析器（支持嵌套优先级与包含指令）
@@ -249,6 +251,7 @@ moonyara/
 ├── engine.mbt               # 顶层扫描引擎 API 门面
 ├── cmd/main/                # 原生 CLI 命令行工具实现
 ├── wasm/                    # 零依赖 WebAssembly / JS 跨平台导出包
+├── scripts/                 # 演示与本地服务脚本 (Web 演示服务 / CLI 交互演练)
 └── examples/
     ├── rules/               # 真实威胁特征规则库（Webshell, 勒索信, PowerShell, C2 等）
     ├── samples/             # 真实配套测试样本库
