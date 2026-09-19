@@ -1,4 +1,4 @@
-import * as scanner from "../../_build/js/debug/build/wasm/wasm.js";
+import * as scanner from "./wasm.js";
 
 const TEMPLATES = {
   webshell: `rule Suspicious_Webshell {

@@ -1,4 +1,4 @@
-import * as scanner from '../../_build/js/debug/build/wasm/wasm.js';
+import * as scanner from './wasm.js';
 
 console.log('=== WebAssembly / JS Sandboxed Scanner Demo ===\n');
 

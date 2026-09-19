@@ -111,6 +111,35 @@
 
 ---
 
+## 一键实战演示与交互体验 (Demo)
+
+`moonyara` 提供了开箱即用的**终端全流程实战演示**与**浏览器端 WebAssembly 交互式安全工作台**：
+
+### 1. 浏览器端 WebAssembly 安全特征扫描工作台 (Web Demo)
+
+无需任何后端依赖，纯前端本地离线沙箱运行，保障待测样本与规则隐私安全：
+
+- **一键启动**：双击运行根目录下的 `run_web_demo.bat`（或执行 `node scripts/serve_demo.js`）。
+- **浏览器访问**：服务启动后将自动在系统默认浏览器中打开 `http://localhost:8080`。
+- **主要体验点**：
+  - 内置 Webshell、单字节 XOR 混淆、Base64 任意对齐、PowerShell 无文件执行、勒索信、C2 流量信标等典型规则模板。
+  - 一键加载配套恶意样本或干净对比样本。
+  - 支持直接将本地任意待测文件拖拽到页面进行离线检测。
+  - 实时输出 Hex Dump 十六进制双栏转储与 ASCII 边栏，即时高亮标定威胁命中区间。
+
+### 2. 命令行多场景全景演练 (CLI Demo)
+
+- **一键演练**：双击运行根目录下的 `run_cli_demo.bat`（或执行 `node scripts/cli_demo.js`）。
+- **演练覆盖**：
+  1. 规则库批量语法校验与编译 (`check`)
+  2. 典型 Web 后门检出 (PHP 反弹 Webshell)
+  3. 复杂免杀 Shellcode 穿透 (单字节 XOR 0x01-0xFF 密钥枚举)
+  4. 无文件恶意脚本检测 (Base64 跨对齐边界无偏匹配)
+  5. 攻防编排与标签定向过滤 (`-t` 白名单与 `-e` 黑名单)
+  6. 全资产目录递归扫描 (`-R`) 与 SIEM/SOC 结构化 JSON 报文生成
+
+---
+
 ## 快速开始
 
 ### 1. 安装与构建
@@ -249,6 +278,8 @@ moonyara/
 ├── moon.pkg                 # 核心库包配置
 ├── LICENSE                  # Apache-2.0 开源许可协议
 ├── README.md                # 完整技术架构与使用说明
+├── run_web_demo.bat         # 浏览器端 WebAssembly 安全工作台一键启动脚本
+├── run_cli_demo.bat         # 命令行多场景全景演练一键启动脚本
 ├── types.mbt                # 核心 AST 领域数据模型
 ├── lexer.mbt                # 词法分析器（支持通配 Hex 块与正则字面量）
 ├── parser.mbt               # 递归下降语法解析器（支持嵌套优先级与包含指令）
@@ -258,6 +289,7 @@ moonyara/
 ├── engine.mbt               # 顶层扫描引擎 API 门面
 ├── cmd/main/                # 原生 CLI 命令行工具实现
 ├── wasm/                    # 零依赖 WebAssembly / JS 跨平台导出包
+├── scripts/                 # 演示与本地服务脚本 (Web 演示服务 / CLI 交互演练)
 └── examples/
     ├── rules/               # 真实威胁特征规则库（Webshell, 勒索信, PowerShell, C2 等）
     ├── samples/             # 真实配套测试样本库
